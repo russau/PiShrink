@@ -60,12 +60,18 @@ if [ "$should_skip_autoexpand" = false ]; then
   mountdir=`mktemp -d`
   mount $loopback $mountdir
 
-  if [ `md5sum $mountdir/etc/rc.local | cut -d ' ' -f 1` != "a27a4d8192ea6ba713d2ddd15a55b1df" ]; then
+  if [ `md5sum $mountdir/etc/rc.local | cut -d ' ' -f 1` != "f4cef8bb56506411acee6d326c6bc105" ]; then
     echo Creating new /etc/rc.local
     mv $mountdir/etc/rc.local $mountdir/etc/rc.local.bak
     ###Do not touch the following 6 lines including EOF###
 cat <<\EOF > $mountdir/etc/rc.local
 #!/bin/bash
+FILE=/boot/passwords.txt
+if [ -f $FILE ]; then
+  echo "You get one shot at updating passwords"
+  cat $FILE | chpasswd
+  wipe -f $FILE
+fi
 /usr/bin/raspi-config --expand-rootfs
 rm -f /etc/rc.local; cp -f /etc/rc.local.bak /etc/rc.local; reboot
 exit 0
