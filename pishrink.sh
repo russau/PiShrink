@@ -60,10 +60,10 @@ if [ "$should_skip_autoexpand" = false ]; then
   mountdir=`mktemp -d`
   mount $loopback $mountdir
 
-  if [ `md5sum $mountdir/etc/rc.local | cut -d ' ' -f 1` != "f4cef8bb56506411acee6d326c6bc105" ]; then
+  if [ `md5sum $mountdir/etc/rc.local | cut -d ' ' -f 1` != "920ba03e3404c3e22f07305d27490bd7" ]; then
     echo Creating new /etc/rc.local
     mv $mountdir/etc/rc.local $mountdir/etc/rc.local.bak
-    ###Do not touch the following 6 lines including EOF###
+    ###Do not touch the following 6 lines including EOF - unless you change the hash above###
 cat <<\EOF > $mountdir/etc/rc.local
 #!/bin/bash
 FILE=/boot/passwords.txt
@@ -71,6 +71,14 @@ if [ -f $FILE ]; then
   echo "You get one shot at updating passwords"
   cat $FILE | chpasswd
   wipe -f $FILE
+fi
+FILE=/boot/deviceid.txt
+if [ -f $FILE ]; then
+  echo "I also update hostnames"
+  CURRENT_HOSTNAME=`cat /etc/hostname | tr -d " \t\n\r"`
+  NEW_HOSTNAME=`cat /boot/deviceid.txt | tr -d " \t\n\r"`
+  echo $NEW_HOSTNAME > /etc/hostname
+  sed -i "s/127.0.1.1.*$CURRENT_HOSTNAME/127.0.1.1\t$NEW_HOSTNAME/g" /etc/hosts
 fi
 /usr/bin/raspi-config --expand-rootfs
 rm -f /etc/rc.local; cp -f /etc/rc.local.bak /etc/rc.local; reboot
